@@ -1,0 +1,55 @@
+apply plugin:'groovy'
+apply plugin:'war'
+apply plugin:'jetty'
+apply plugin:'eclipse'
+apply plugin:'eclipse-wtp'
+apply plugin:'idea'
+
+repositories {
+    mavenCentral()
+}
+
+sourceSets {
+    integrationTest
+}
+
+httpPort = 8080
+stopPort = 9451
+stopKey = 'foo'
+
+[jettyRun, jettyRunWar]*.daemon = true
+
+task intTest(type: Test, dependsOn: jettyRun) {
+    // callServlets()
+    testClassesDir = sourceSets.integrationTest.output.classesDir
+    classpath = sourceSets.integrationTest.runtimeClasspath
+    jettyStop.execute()
+}
+
+//private void callServlets() {
+//    String response = "http://localhost:$httpPort/HelloServlet/hello".toURL().text.trim()
+//    assert response == 'Hello, Servlet!'
+//    response = "http://localhost:$httpPort/HelloServlet/hellogs".toURL().text.trim()
+//    assert response == 'Hello from a Groovy Servlet!'
+//}
+
+check.dependsOn intTest
+
+task wrapper(type:Wrapper) {
+    gradleVersion = '2.0'
+}
+
+def springVersion = '3.2.2.RELEASE'
+
+dependencies {
+    compile "org.codehaus.groovy:groovy-all:2.3.3"
+    providedCompile 'javax.servlet:servlet-api:2.5'
+    
+    testCompile "junit:junit:4.10"
+    testCompile "org.springframework:spring-core:$springVersion"
+    testCompile "org.springframework:spring-test:$springVersion"
+    
+    integrationTestCompile configurations.testCompile
+    integrationTestRuntime configurations.testRuntime
+    
+}
